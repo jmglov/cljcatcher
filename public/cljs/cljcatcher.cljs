@@ -23,6 +23,9 @@
 (defn item->episode [i item]
   {:title (get-attr item "title")
    :description (get-attr item "summary")
+   :audio-url (-> item
+                  (.querySelector "enclosure")
+                  (.getAttribute "url"))
    :number i})
 
 (defn feed->podcast [feed]
@@ -44,20 +47,54 @@
   (let [el (js/document.querySelector "img#cover-art")]
     (set! (.-src el) image-url)))
 
+(defn load-episode! [{:keys [description audio-url] :as item}]
+  (js/console.log item)
+  (set-description! description)
+  (set! (.-src (js/document.querySelector "audio"))
+        audio-url))
+
+(defn set-episodes! [episodes]
+  (let [ul (js/document.querySelector "div#episode-list > ul")]
+    (.replaceChildren ul)
+    (doseq [{:keys [title description number]
+             :as episode}
+            episodes
+            :let [li (js/document.createElement "li")]]
+      (-> li (.-classList) (.add "clickable"))
+      (set! (.-innerHTML li)
+            (str "Episode " number " - " title))
+      (.addEventListener li "click"
+                         #(load-episode! episode))
+      (.appendChild ul li))))
+
 (defn display-podcast!
-  [{:keys [title description cover-art]
+  [{:keys [title description cover-art episodes]
     :as podcast}]
   (js/console.log (clj->js podcast))
   (set-title! title)
   (set-description! description)
-  (set-cover-art! cover-art))
+  (set-cover-art! cover-art)
+  (set-episodes! episodes))
 
 (comment
 
   (p/->> feed-url
          load-feed
+         js/console.log)
+
+  (p/->> feed-url
+         load-feed
          feed->podcast
          display-podcast!)
+
+  (p/->> feed-url
+         load-feed
+         feed->podcast
+         :episodes
+         first
+         clj->js
+         js/console.log
+         #_display-podcast!)
 
   (p/let [feed (load-feed feed-url)
           podcast
