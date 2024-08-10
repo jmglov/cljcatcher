@@ -20,6 +20,11 @@
       (.querySelector attr-name)
       (.-innerHTML)))
 
+(defn feed->podcast [feed]
+  {:title (get-attr feed "channel > title")
+   :description (get-attr feed "channel > description")
+   :cover-art (get-attr feed "channel > image > url")})
+
 (defn set-title! [title]
   (set! (.-title js/document) title))
 
@@ -39,7 +44,10 @@
 
 (comment
 
-  (display-podcast! feed-url)
+  (p/->> feed-url
+         load-feed
+         feed->podcast
+         display-podcast!)
 
   (p/let [feed (load-feed feed-url)
           podcast
