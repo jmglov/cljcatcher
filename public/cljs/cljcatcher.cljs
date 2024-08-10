@@ -27,6 +27,15 @@
     (set! (.-innerHTML el) description))
   feed)
 
+(defn set-cover-art! [feed]
+  (let [image-url
+        (-> feed
+            (.querySelector "channel > image > url")
+            (.-innerHTML))
+        el (js/document.querySelector "img#cover-art")]
+    (set! (.-src el) image-url))
+  feed)
+
 (comment
 
   (js/fetch (js/Request. feed-url))
@@ -42,7 +51,8 @@
   (p/-> (fetch-feed feed-url)
         parse-xml
         set-title!
-        set-description!)
+        set-description!
+        set-cover-art!)
 
   (def feed (parse-xml xml))
   ;; => #'cljcatcher/feed
