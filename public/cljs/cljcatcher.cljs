@@ -11,70 +11,66 @@
 (defn parse-xml [xml]
   (.parseFromString (js/window.DOMParser.) xml "text/xml"))
 
+(defn load-feed [url]
+  (p/-> (fetch-feed url)
+        parse-xml))
+
+(defn get-attr [el attr-name]
+  (-> el
+      (.querySelector attr-name)
+      (.-innerHTML)))
+
 (defn set-title! [feed]
-  (let [title (-> feed
-                  (.querySelector "channel > title")
-                  (.-innerHTML))]
+  (let [title (get-attr feed "channel > title")]
     (set! (.-title js/document) title))
   feed)
 
 (defn set-description! [feed]
   (let [description
-        (-> feed
-            (.querySelector "channel > description")
-            (.-innerHTML))
+        (get-attr feed "channel > description")
         el (js/document.querySelector "div#description")]
     (set! (.-innerHTML el) description))
   feed)
 
 (defn set-cover-art! [feed]
   (let [image-url
-        (-> feed
-            (.querySelector "channel > image > url")
-            (.-innerHTML))
+        (get-attr feed "channel > image > url")
         el (js/document.querySelector "img#cover-art")]
     (set! (.-src el) image-url))
   feed)
 
-(comment
-
-  (js/fetch (js/Request. feed-url))
-  ;; => #object[Promise [object Promise]]
-  ;; => #object[Request [object Request]]
-
-  (p/-> (js/Request. feed-url)
-        js/fetch
-        (.text)
-        js/console.log)
-  ;; => #<Promise[~]>
-
-  (p/-> (fetch-feed feed-url)
-        parse-xml
+(defn display-podcast! [feed-url]
+  (p/-> (load-feed feed-url)
         set-title!
         set-description!
-        set-cover-art!)
+        set-cover-art!))
 
-  (def feed (parse-xml xml))
-  ;; => #'cljcatcher/feed
-  ;; => #object[XMLDocument [object XMLDocument]]
-  ;; => "#error {:message \"Failed to execute 'parseFromString' on 'DOMParser': 2 arguments required, but only 1 present.\", :data {:type :sci/error, :line 1, :column 1, :message \"Failed to execute 'parseFromString' on 'DOMParser': 2 arguments required, but only 1 present.\", :sci.impl/callstack #object[cljs.core.Volatile {:val ({:line 1, :column 1, :ns #object[To cljcatcher], :file nil})}], :file nil}, :cause #object[TypeError TypeError: Failed to execute 'parseFromString' on 'DOMParser': 2 arguments required, but only 1 present.]}"
-  ;; => #object[DOMParser [object DOMParser]]
+(comment
 
-  (set-title! feed)
+  (display-podcast! feed-url)
 
-  (set-description! feed)
-
-  (-> feed
-      (.querySelector "channel > title")
-      (.-innerHTML))
-  ;; => "Science Rules! with Bill Nye"
-  ;; => #object[Element [object Element]]
-
-  (-> feed
-      (.querySelector "channel > description")
-      (.-innerHTML))
-  ;; => "Bill Nye is doing some cool science stuff."
-
-  (js/document.querySelector "div#description")
+  (p/let [items
+          (p/-> (load-feed feed-url)
+                set-title!
+                set-description!
+                set-cover-art!
+                (.querySelectorAll "item"))
+          episodes-list (js/document.querySelector "div#episode-list > ul")
+          episodes
+          (->> items
+               (take 2)
+               (map (fn [item]
+                      (let [li (js/document.createElement "li")]
+                        (-> li (.-classList) (.add "clickable"))
+                        (set! (.-innerHTML li) (get-attr item "title"))
+                        (.addEventListener
+                         li "click"
+                         #(set-description!
+                           (set! (.-innerHTML (js/document.querySelector "div#description"))
+                                 (get-attr item "summary"))))
+                        li))))]
+    (.replaceChildren episodes-list)
+    (doseq [episode episodes]
+      (.appendChild episodes-list episode)))
 
   )
