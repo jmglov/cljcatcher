@@ -1,0 +1,50 @@
+body {
+  font:
+    1.2em Helvetica,
+    Arial,
+    sans-serif;
+  margin: 20px;
+  padding: 0;
+  max-width: 400px; /* will be overriden for wide screens */
+}
+
+div#episode {
+  display: flex;
+  flex-direction: column;
+}
+
+div#player {
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+}
+
+audio {
+  align-self: center;
+}
+
+li {
+  cursor: pointer;
+}
+
+@media screen and (min-width: 750px) {
+
+  body {
+    max-width: 95%;
+  }
+
+  div#episode {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  div#player {
+    max-width: 50%;
+  }
+
+  div#info {
+    padding-top: 0.4em;
+  }
+
+}
