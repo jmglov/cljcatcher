@@ -20,10 +20,18 @@
       (.querySelector attr-name)
       (.-innerHTML)))
 
+(defn item->episode [i item]
+  {:title (get-attr item "title")
+   :description (get-attr item "summary")
+   :number i})
+
 (defn feed->podcast [feed]
   {:title (get-attr feed "channel > title")
    :description (get-attr feed "channel > description")
-   :cover-art (get-attr feed "channel > image > url")})
+   :cover-art (get-attr feed "channel > image > url")
+   :episodes (->> (.querySelectorAll feed "item")
+                  reverse
+                  (map-indexed item->episode))})
 
 (defn set-title! [title]
   (set! (.-title js/document) title))
@@ -37,7 +45,9 @@
     (set! (.-src el) image-url)))
 
 (defn display-podcast!
-  [{:keys [title description cover-art]}]
+  [{:keys [title description cover-art]
+    :as podcast}]
+  (js/console.log (clj->js podcast))
   (set-title! title)
   (set-description! description)
   (set-cover-art! cover-art))
