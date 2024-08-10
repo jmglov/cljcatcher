@@ -20,34 +20,33 @@
       (.querySelector attr-name)
       (.-innerHTML)))
 
-(defn set-title! [feed]
-  (let [title (get-attr feed "channel > title")]
-    (set! (.-title js/document) title))
-  feed)
+(defn set-title! [title]
+  (set! (.-title js/document) title))
 
-(defn set-description! [feed]
-  (let [description
-        (get-attr feed "channel > description")
-        el (js/document.querySelector "div#description")]
-    (set! (.-innerHTML el) description))
-  feed)
+(defn set-description! [description]
+  (let [el (js/document.querySelector "div#description")]
+    (set! (.-innerHTML el) description)))
 
-(defn set-cover-art! [feed]
-  (let [image-url
-        (get-attr feed "channel > image > url")
-        el (js/document.querySelector "img#cover-art")]
-    (set! (.-src el) image-url))
-  feed)
+(defn set-cover-art! [image-url]
+  (let [el (js/document.querySelector "img#cover-art")]
+    (set! (.-src el) image-url)))
 
-(defn display-podcast! [feed-url]
-  (p/-> (load-feed feed-url)
-        set-title!
-        set-description!
-        set-cover-art!))
+(defn display-podcast!
+  [{:keys [title description cover-art]}]
+  (set-title! title)
+  (set-description! description)
+  (set-cover-art! cover-art))
 
 (comment
 
   (display-podcast! feed-url)
+
+  (p/let [feed (load-feed feed-url)
+          podcast
+          {:title (get-attr feed "channel > title")
+           :description (get-attr feed "channel > description")
+           :cover-art (get-attr feed "channel > image > url")}]
+    (display-podcast! podcast))
 
   (p/let [items
           (p/-> (load-feed feed-url)
