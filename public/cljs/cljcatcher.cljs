@@ -1,4 +1,12 @@
-(ns cljcatcher)
+(ns cljcatcher
+  (:require [promesa.core :as p]))
+
+(def feed-url "https://feeds.simplecast.com/K0NWGFwM")
+
+(defn fetch-feed [url]
+  (p/-> (js/Request. url)
+        js/fetch
+        (.text)))
 
 (defn parse-xml [xml]
   (.parseFromString (js/window.DOMParser.) xml "text/xml"))
@@ -7,7 +15,8 @@
   (let [title (-> feed
                   (.querySelector "channel > title")
                   (.-innerHTML))]
-    (set! (.-title js/document) title)))
+    (set! (.-title js/document) title))
+  feed)
 
 (defn set-description! [feed]
   (let [description
@@ -15,18 +24,25 @@
             (.querySelector "channel > description")
             (.-innerHTML))
         el (js/document.querySelector "div#description")]
-    (set! (.-innerHTML el) description)))
+    (set! (.-innerHTML el) description))
+  feed)
 
 (comment
 
-  (def xml
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-  <channel>
-    <title>Science Rules! with Bill Nye</title>
-    <description>Bill Nye is doing some cool science stuff.</description>
-  </channel>
-")
+  (js/fetch (js/Request. feed-url))
+  ;; => #object[Promise [object Promise]]
+  ;; => #object[Request [object Request]]
 
+  (p/-> (js/Request. feed-url)
+        js/fetch
+        (.text)
+        js/console.log)
+  ;; => #<Promise[~]>
+
+  (p/-> (fetch-feed feed-url)
+        parse-xml
+        set-title!
+        set-description!)
 
   (def feed (parse-xml xml))
   ;; => #'cljcatcher/feed
@@ -35,6 +51,8 @@
   ;; => #object[DOMParser [object DOMParser]]
 
   (set-title! feed)
+
+  (set-description! feed)
 
   (-> feed
       (.querySelector "channel > title")
