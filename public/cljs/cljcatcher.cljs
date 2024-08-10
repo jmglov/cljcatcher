@@ -76,55 +76,7 @@
   (set-cover-art! cover-art)
   (set-episodes! episodes))
 
-(comment
-
-  (p/->> feed-url
-         load-feed
-         js/console.log)
-
-  (p/->> feed-url
-         load-feed
-         feed->podcast
-         display-podcast!)
-
-  (p/->> feed-url
-         load-feed
-         feed->podcast
-         :episodes
-         first
-         clj->js
-         js/console.log
-         #_display-podcast!)
-
-  (p/let [feed (load-feed feed-url)
-          podcast
-          {:title (get-attr feed "channel > title")
-           :description (get-attr feed "channel > description")
-           :cover-art (get-attr feed "channel > image > url")}]
-    (display-podcast! podcast))
-
-  (p/let [items
-          (p/-> (load-feed feed-url)
-                set-title!
-                set-description!
-                set-cover-art!
-                (.querySelectorAll "item"))
-          episodes-list (js/document.querySelector "div#episode-list > ul")
-          episodes
-          (->> items
-               (take 2)
-               (map (fn [item]
-                      (let [li (js/document.createElement "li")]
-                        (-> li (.-classList) (.add "clickable"))
-                        (set! (.-innerHTML li) (get-attr item "title"))
-                        (.addEventListener
-                         li "click"
-                         #(set-description!
-                           (set! (.-innerHTML (js/document.querySelector "div#description"))
-                                 (get-attr item "summary"))))
-                        li))))]
-    (.replaceChildren episodes-list)
-    (doseq [episode episodes]
-      (.appendChild episodes-list episode)))
-
-  )
+(p/-> feed-url
+      load-feed
+      feed->podcast
+      display-podcast!)
